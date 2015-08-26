@@ -1,5 +1,6 @@
 
 
-## nginx-consul
+## varnish-consul
 
-Docker container running an nginx configuration stored in Consul K/V. 
+Docker container running a Varnish configuration stored in Consul K/V.
+This is a fork of nginx-consul, but with Varnish instead of nginx. Work in progress!
