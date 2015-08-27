@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e 
+set -e
 #set the DEBUG env variable to turn on debugging
 [[ -n "$DEBUG" ]] && set -x
 
@@ -26,43 +26,43 @@ cat <<USAGE
 Configure using the following environment variables:
 
 Nginx vars:
-  VARNISH_KV              Consul K/V path to template contents
-                        (default varnish/template/default)
+  VARNISH_KV             Consul K/V path to template contents
+                         (default varnish/template/default)
 
-  VARNISH_DEBUG           If set, run consul-template once and check generated varnish.conf
-                        (default not set)
+  VARNISH_DEBUG          If set, run consul-template once and check generated varnish.conf
+                         (default not set)
 
-  VARNISH_AUTH_TYPE	Use a preconfigured template for Nginx basic authentication
-			Can be basic/auth/<not set>
-			(default not set)
+  VARNISH_AUTH_TYPE      Use a preconfigured template for Nginx basic authentication
+                         Can be basic/auth/<not set>
+                         (default not set)
 
-  VARNISH_AUTH_BASIC_KV	Consul K/V path for varnish users
-			(default not set)
+  VARNISH_AUTH_BASIC_KV  Consul K/V path for varnish users
+                         (default not set)
 
 Consul vars:
-  CONSUL_LOG_LEVEL	Set the consul-template log level
-			(default debug)
+  CONSUL_LOG_LEVEL       Set the consul-template log level
+                         (default debug)
 
-  CONSUL_CONNECT	URI for Consul agent
-			(default not set)
+  CONSUL_CONNECT         URI for Consul agent
+                         (default not set)
 
-  CONSUL_SSL		Connect to Consul using SSL
-			(default not set)
+  CONSUL_SSL             Connect to Consul using SSL
+                         (default not set)
 
-  CONSUL_SSL_VERIFY	Verify Consul SSL connection
-			(default true)
+  CONSUL_SSL_VERIFY      Verify Consul SSL connection
+                         (default true)
 
-  CONSUL_TOKEN		Consul API token
-			(default not set)
+  CONSUL_TOKEN           Consul API token
+                         (default not set)
 USAGE
 }
 
 function config_auth {
   case ${VARNISH_AUTH_TYPE} in
-  basic)
-	ln -s /defaults/config.d/varnish-auth.cfg /consul-template/config.d/varnish-auth.cfg
-	ln -s /defaults/templates/varnish-basic.tmpl /consul-template/templates/varnish-auth.tmpl
-	;;
+    basic)
+      ln -s /defaults/config.d/varnish-auth.cfg /consul-template/config.d/varnish-auth.cfg
+      ln -s /defaults/templates/varnish-basic.tmpl /consul-template/templates/varnish-auth.tmpl
+    ;;
   esac
 
   # varnish fails if the file does not exist so create an empty one for now
@@ -70,7 +70,7 @@ function config_auth {
 }
 
 function launch_consul_template {
-  vars=$@
+  vars=$*
   ctargs=
 
   if [ -n "${VARNISH_AUTH_TYPE}" ]; then
@@ -85,22 +85,22 @@ function launch_consul_template {
   # Create an empty varnish.tmpl so consul-template will start
   touch /consul-template/templates/varnish.tmpl
 
-  if [ -n "${VARNISH_DEBUG}" ]; then
+  if [[ -n "${VARNISH_DEBUG}" ]]; then
     echo "Running consul template -once..."
-    consul-template -log-level ${CONSUL_LOGLEVEL} \
-		       -template /consul-template/templates/varnish.tmpl.in:/consul-template/templates/varnish.tmpl \
-		       ${ctargs} -once 
+    consul-template -log-level "${CONSUL_LOGLEVEL}" \
+           -template /consul-template/templates/varnish.tmpl.in:/consul-template/templates/varnish.tmpl \
+           "${ctargs}" -once
 
-    consul-template -log-level ${CONSUL_LOGLEVEL} \
+    consul-template -log-level "${CONSUL_LOGLEVEL}" \
                        -config /consul-template/config.d \
-                       ${ctargs} -once ${vars}
+                       "${ctargs}" -once "${vars}"
     /scripts/varnish-run.sh
   else
     echo "Starting consul template..."
-    exec consul-template -log-level ${CONSUL_LOGLEVEL} \
+    exec consul-template -log-level "${CONSUL_LOGLEVEL}" \
                        -config /consul-template/config.d \
-                       ${ctargs} ${vars} 
+                       "${ctargs}" "${vars}"
   fi
 }
 
-launch_consul_template $@
+launch_consul_template "$@"
