@@ -1,0 +1,3 @@
+{{ with $d := env "VARNISH_KV" }}
+{{ key $d }}
+{{ end }}

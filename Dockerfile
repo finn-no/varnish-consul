@@ -1,10 +1,8 @@
 FROM asteris/consul-template:latest
 
-MAINTAINER Chris Aubuchon <Chris.Aubuchon@gmail.com>
+RUN apk-install bash ca-certificates varnish
 
-RUN apk-install bash nginx ca-certificates
-
-RUN mkdir -p /tmp/nginx /defaults
+RUN mkdir -p /tmp/varnish /defaults
 
 ADD templates/ /consul-template/templates
 ADD config.d/ /consul-template/config.d

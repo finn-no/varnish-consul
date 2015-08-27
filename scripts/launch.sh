@@ -5,11 +5,11 @@ set -e
 [[ -n "$DEBUG" ]] && set -x
 
 # Required vars
-NGINX_KV=${NGINX_KV:-nginx/template/default}
+VARNISH_KV=${VARNISH_KV:-varnish/template/default}
 CONSUL_LOGLEVEL=${CONSUL_LOGLEVEL:-debug}
 CONSUL_SSL_VERIFY=${CONSUL_SSL_VERIFY:-true}
 
-export NGINX_KV
+export VARNISH_KV
 
 # set up SSL
 if [ "$(ls -A /usr/local/share/ca-certificates)" ]; then
@@ -21,22 +21,22 @@ fi
 
 function usage {
 cat <<USAGE
-  launch.sh             Start a consul-backed nginx instance
+  launch.sh             Start a consul-backed varnish instance
 
 Configure using the following environment variables:
 
 Nginx vars:
-  NGINX_KV              Consul K/V path to template contents
-                        (default nginx/template/default)
+  VARNISH_KV              Consul K/V path to template contents
+                        (default varnish/template/default)
 
-  NGINX_DEBUG           If set, run consul-template once and check generated nginx.conf
+  VARNISH_DEBUG           If set, run consul-template once and check generated varnish.conf
                         (default not set)
 
-  NGINX_AUTH_TYPE	Use a preconfigured template for Nginx basic authentication
+  VARNISH_AUTH_TYPE	Use a preconfigured template for Nginx basic authentication
 			Can be basic/auth/<not set>
 			(default not set)
 
-  NGINX_AUTH_BASIC_KV	Consul K/V path for nginx users
+  VARNISH_AUTH_BASIC_KV	Consul K/V path for varnish users
 			(default not set)
 
 Consul vars:
@@ -58,22 +58,22 @@ USAGE
 }
 
 function config_auth {
-  case ${NGINX_AUTH_TYPE} in
+  case ${VARNISH_AUTH_TYPE} in
   basic)
-	ln -s /defaults/config.d/nginx-auth.cfg /consul-template/config.d/nginx-auth.cfg
-	ln -s /defaults/templates/nginx-basic.tmpl /consul-template/templates/nginx-auth.tmpl
+	ln -s /defaults/config.d/varnish-auth.cfg /consul-template/config.d/varnish-auth.cfg
+	ln -s /defaults/templates/varnish-basic.tmpl /consul-template/templates/varnish-auth.tmpl
 	;;
   esac
 
-  # nginx fails if the file does not exist so create an empty one for now
-  touch /etc/nginx/nginx-auth.conf
+  # varnish fails if the file does not exist so create an empty one for now
+  touch /etc/varnish/varnish-auth.conf
 }
 
 function launch_consul_template {
   vars=$@
   ctargs=
 
-  if [ -n "${NGINX_AUTH_TYPE}" ]; then
+  if [ -n "${VARNISH_AUTH_TYPE}" ]; then
     config_auth
   fi
 
@@ -82,19 +82,19 @@ function launch_consul_template {
   [[ -n "${CONSUL_SSL}" ]] && ctargs="${ctargs} -ssl-verify=${CONSUL_SSL_VERIFY}"
   [[ -n "${CONSUL_TOKEN}" ]] && ctargs="${ctargs} -token ${CONSUL_TOKEN}"
 
-  # Create an empty nginx.tmpl so consul-template will start
-  touch /consul-template/templates/nginx.tmpl
+  # Create an empty varnish.tmpl so consul-template will start
+  touch /consul-template/templates/varnish.tmpl
 
-  if [ -n "${NGINX_DEBUG}" ]; then
+  if [ -n "${VARNISH_DEBUG}" ]; then
     echo "Running consul template -once..."
     consul-template -log-level ${CONSUL_LOGLEVEL} \
-		       -template /consul-template/templates/nginx.tmpl.in:/consul-template/templates/nginx.tmpl \
+		       -template /consul-template/templates/varnish.tmpl.in:/consul-template/templates/varnish.tmpl \
 		       ${ctargs} -once 
 
     consul-template -log-level ${CONSUL_LOGLEVEL} \
                        -config /consul-template/config.d \
                        ${ctargs} -once ${vars}
-    /scripts/nginx-run.sh
+    /scripts/varnish-run.sh
   else
     echo "Starting consul template..."
     exec consul-template -log-level ${CONSUL_LOGLEVEL} \
