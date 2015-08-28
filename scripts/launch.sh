@@ -70,17 +70,17 @@ function config_auth {
 }
 
 function launch_consul_template {
-  vars=$*
-  ctargs=
+  vars=("$@")
+  ctargs=()
 
   if [ -n "${VARNISH_AUTH_TYPE}" ]; then
     config_auth
   fi
 
-  [[ -n "${CONSUL_CONNECT}" ]] && ctargs="${ctargs} -consul ${CONSUL_CONNECT}"
-  [[ -n "${CONSUL_SSL}" ]] && ctargs="${ctargs} -ssl"
-  [[ -n "${CONSUL_SSL}" ]] && ctargs="${ctargs} -ssl-verify=${CONSUL_SSL_VERIFY}"
-  [[ -n "${CONSUL_TOKEN}" ]] && ctargs="${ctargs} -token ${CONSUL_TOKEN}"
+  [[ -n "${CONSUL_CONNECT}" ]] && ctargs+=("-consul ${CONSUL_CONNECT}")
+  [[ -n "${CONSUL_SSL}" ]] && ctargs+=("-ssl")
+  [[ -n "${CONSUL_SSL}" ]] && ctargs+=("-ssl-verify=${CONSUL_SSL_VERIFY}")
+  [[ -n "${CONSUL_TOKEN}" ]] && ctargs+=("-token ${CONSUL_TOKEN}")
 
   # Create an empty varnish.tmpl so consul-template will start
   touch /consul-template/templates/varnish.tmpl
@@ -89,17 +89,17 @@ function launch_consul_template {
     echo "Running consul template -once..."
     consul-template -log-level "${CONSUL_LOGLEVEL}" \
            -template /consul-template/templates/varnish.tmpl.in:/consul-template/templates/varnish.tmpl \
-           "${ctargs}" -once
+           "${ctargs[@]}" -once
 
     consul-template -log-level "${CONSUL_LOGLEVEL}" \
                        -config /consul-template/config.d \
-                       "${ctargs}" -once "${vars}"
+                       "${ctargs[@]}" -once "${vars[@]}"
     /scripts/varnish-run.sh
   else
     echo "Starting consul template..."
     exec consul-template -log-level "${CONSUL_LOGLEVEL}" \
                        -config /consul-template/config.d \
-                       "${ctargs}" "${vars}"
+                       "${ctargs[@]}" "${vars[@]}"
   fi
 }
 
