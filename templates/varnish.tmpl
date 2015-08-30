@@ -1,0 +1,23 @@
+# Marker to tell the VCL compiler that this VCL has been adapted to the new 4.0 format.
+vcl 4.0;
+
+backend default {
+    # Default backend definition. Set this to point to your content server.
+    .host = "127.0.0.1";
+    .port = "80";
+}
+
+sub vcl_recv {
+    # Typically you clean up the request here, removing cookies you don't need,
+    # rewriting the request, etc.
+}
+
+sub vcl_backend_response {
+    # Here you clean the response headers, removing silly Set-Cookie headers
+    # and other mistakes your backend does.
+
+}
+
+sub vcl_deliver {
+    # You can do accounting or modifying the final object here.
+}
